@@ -1,0 +1,8 @@
+image_id: 40473564-beaa-462c-8457-59058198bd25
+class_name: 1
+class_id: 1
+rad_id: 1
+x_min: 251.0
+y_min: 543.0
+x_max: 135.0
+y_max: 188.0

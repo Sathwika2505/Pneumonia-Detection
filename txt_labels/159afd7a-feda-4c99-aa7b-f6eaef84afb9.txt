@@ -1,0 +1,8 @@
+image_id: 159afd7a-feda-4c99-aa7b-f6eaef84afb9
+class_name: 1
+class_id: 1
+rad_id: 1
+x_min: 584.0
+y_min: 498.0
+x_max: 143.0
+y_max: 246.0

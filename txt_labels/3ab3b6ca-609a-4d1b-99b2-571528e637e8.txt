@@ -1,0 +1,8 @@
+image_id: 3ab3b6ca-609a-4d1b-99b2-571528e637e8
+class_name: 1
+class_id: 1
+rad_id: 1
+x_min: 86.0
+y_min: 154.0
+x_max: 319.0
+y_max: 638.0

@@ -1,0 +1,8 @@
+image_id: 0b1c0cf3-21b9-49f0-b33b-3e71b24295eb
+class_name: 0
+class_id: 0
+rad_id: 0
+x_min: nan
+y_min: nan
+x_max: nan
+y_max: nan

@@ -1,0 +1,8 @@
+image_id: 351a2161-64fb-41c0-889f-653d320a406f
+class_name: 1
+class_id: 1
+rad_id: 1
+x_min: 580.0
+y_min: 341.0
+x_max: 270.0
+y_max: 319.0
