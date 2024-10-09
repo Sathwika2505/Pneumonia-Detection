@@ -1,3 +1,4 @@
+import torch
 from torch.utils.data import Dataset
 import os
 from xml.etree import ElementTree as ET
@@ -12,6 +13,7 @@ from torchvision import transforms as transforms
 import dill as pickle
 
 def transform_data():
+    # os.system("python3.10 annot2xml.py")
     # Define the training tranforms
     def get_train_aug():
         return A.Compose([
@@ -92,72 +94,76 @@ def transform_data():
             self.all_annot_paths = glob.glob(os.path.join(self.labels_path, '*.xml'))
             self.all_images = [image_path.split(os.path.sep)[-1] for image_path in self.all_image_paths]
             self.all_images = sorted(self.all_images)
+            print("Number of images:-----------------", len(self.all_images))
             # Remove all annotations and images when no object is present.
 
         def load_image_and_labels(self, index):
+            if index >= len(self.all_images):
+                raise IndexError("Index out of range")
             image_name = self.all_images[index]
             image_path = os.path.join(self.images_path, image_name)
 
-            # Read the image
+            # Read the image.
             image = cv2.imread(image_path)
+            # Convert BGR to RGB color format.
             image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB).astype(np.float32)
             image_resized = cv2.resize(image, (self.width, self.height))
             image_resized /= 255.0
 
+            # Capture the corresponding XML file for getting the annotations.
             annot_filename = image_name[:-4] + '.xml'
             annot_file_path = os.path.join(self.labels_path, annot_filename)
-            
+
             boxes = []
             orig_boxes = []
             labels = []
             tree = ET.parse(annot_file_path)
             root = tree.getroot()
 
-            # Get image dimensions
+            # Get the height and width of the image.
             image_width = image.shape[1]
             image_height = image.shape[0]
 
-            # Extract box coordinates from XML
+            # Box coordinates for xml files are extracted and corrected for image size given.
             for member in root.findall('object'):
                 labels.append(self.classes.index(member.find('Target').text))
-                
                 x_center = float(member.find('x').text)
                 y_center = float(member.find('y').text)
                 width = float(member.find('width').text)
                 height = float(member.find('height').text)
-                
-                xmin = float((x_center - width / 2) * image_width)
-                ymin = float((y_center - height / 2) * image_height)
-                xmax = float((x_center + width / 2) * image_width)
-                ymax = float((y_center + height / 2) * image_height)
+                xmin = (x_center - width / 2) * image_width
+                ymin = (y_center - height / 2) * image_height
+                xmax = (x_center + width / 2) * image_width
+                ymax = (y_center + height / 2) * image_height
 
+                # Ensure xmax and ymax are not greater than the image dimensions
                 ymax, xmax = self.check_image_and_annotation(xmax, ymax, image_width, image_height)
-
                 orig_boxes.append([xmin, ymin, xmax, ymax])
 
-                # Normalize the bounding boxes (make them relative to image dimensions)
-                xmin_final = xmin / image_width
-                xmax_final = xmax / image_width
-                ymin_final = ymin / image_height
-                ymax_final = ymax / image_height
+                xmin_final = (xmin/image_width) * self.width
+                xmax_final = (xmax/image_width) * self.width
+                ymin_final = (ymin/image_height) * self.height
+                ymax_final = (ymax/image_height) * self.height
 
-                # Ensure the bounding box coordinates are in [0, 1] range
-                if not (0.0 <= xmin_final <= 1.0 and 0.0 <= xmax_final <= 1.0 and
-                        0.0 <= ymin_final <= 1.0 and 0.0 <= ymax_final <= 1.0):
-                    return None, None, None, None, None, None, None, None
+                # Skip bounding boxes containing NaN values
+                if not np.isnan([xmin_final, ymin_final, xmax_final, ymax_final]).any():
+                    boxes.append([xmin_final, ymin_final, xmax_final, ymax_final])
 
-                boxes.append([xmin_final, ymin_final, xmax_final, ymax_final])
-            
-            # Convert boxes to a NumPy array and check for NaN
-            boxes = np.array(boxes, dtype=np.float32)
-            
-            if np.isnan(boxes).any():
-                return None, None, None, None, None, None, None, None
-            
-            # Convert to tensors
+            # Bounding box to tensor.
             boxes = torch.as_tensor(boxes, dtype=torch.float32)
+
+            # Check for empty boxes
+            if len(boxes) == 0:
+                # Handle the case where no valid boxes are available.
+                return image, image_resized, [], [], [], None, None, (image_width, image_height)
+
+            # Area of the bounding boxes.
             area = (boxes[:, 3] - boxes[:, 1]) * (boxes[:, 2] - boxes[:, 0])
+
+            # No crowd instances.
             iscrowd = torch.zeros((boxes.shape[0],), dtype=torch.int64)
+
+            # Labels to tensor.
             labels = torch.as_tensor(labels, dtype=torch.int64)
 
             return image, image_resized, orig_boxes, boxes, labels, area, iscrowd, (image_width, image_height)
@@ -242,60 +248,69 @@ def transform_data():
                 torch.tensor(np.array(final_classes)), area, iscrowd, dims
 
         def __getitem__(self, idx):
-            max_attempts = 10  # Define maximum attempts
-            for attempt in range(max_attempts):
-                image, image_resized, orig_boxes, boxes, labels, area, iscrowd, dims = self.load_image_and_labels(idx)
+            print("Index-----------------------", idx)
+            # Capture the image name and the full image path.
+            if not self.mosaic:
+                image, image_resized, orig_boxes, boxes, \
+                    labels, area, iscrowd, dims = self.load_image_and_labels(
+                    index=idx
+                )
+
+            if self.train and self.mosaic:
+                while True:
+                    image, image_resized, boxes, labels, \
+                        area, iscrowd, dims = self.load_cutmix_image_and_boxes(
+                        idx, resize_factor=(self.height, self.width)
+                    )
+                    if len(boxes) > 0:
+                        break
+            
+            # visualize_mosaic_images(boxes, labels, image_resized, self.classes)
+
+            # Prepare the final `target` dictionary.
+            target = {}
+            target["boxes"] = boxes
+            target["labels"] = labels
+            target["area"] = area
+            target["iscrowd"] = iscrowd
+            image_id = torch.tensor([idx])
+            target["image_id"] = image_id
+            if self.use_train_aug: # Use train augmentation if argument is passed.
+                train_aug = get_train_aug()
+                sample = train_aug(image=image_resized,
+                                        bboxes=target['boxes'],
+                                        labels=labels)
+                image_resized = sample['image']
+                target['boxes'] = torch.Tensor(sample['bboxes'])
+            else:
+                sample = self.transforms(image=image_resized,
+                                        bboxes=target['boxes'],
+                                        labels=labels)
+                image_resized = sample['image']
+                target['boxes'] = torch.Tensor(sample['bboxes'])
+            
                 
-                if image is None or boxes is None:
-                    idx += 1  # Move to the next index
-                    if idx >= len(self.all_images):  # If idx exceeds the list, wrap around
-                        idx = 0
-                    continue
-
-                # Continue with the rest of the code as before
-                target = {}
-                target["boxes"] = boxes
-                target["labels"] = labels
-                target["area"] = area
-                target["iscrowd"] = iscrowd
-                target["image_id"] = torch.tensor([idx])
-
-                # Apply augmentations if specified
-                if self.use_train_aug:
-                    train_aug = get_train_aug()
-                    sample = train_aug(image=image_resized, bboxes=target['boxes'], labels=labels)
-                    image_resized = sample['image']
-                    target['boxes'] = torch.Tensor(sample['bboxes'])
-                else:
-                    sample = self.transforms(image=image_resized, bboxes=target['boxes'], labels=labels)
-                    image_resized = sample['image']
-                    target['boxes'] = torch.Tensor(sample['bboxes'])
-
-                return image_resized, target
-            return None, None
-            #raise Exception(f"No valid image found after {max_attempts} attempts starting from index {idx}")
-
+            return image_resized, target
             
         def __len__(self):
             return len(self.all_images)
 
-    IMAGE_WIDTH = 640
-    IMAGE_HEIGHT = 480
+    IMAGE_WIDTH = 800
+    IMAGE_HEIGHT = 680
     classes = ['0', '1']
     # Create datasets
-    train_dataset = CustomDataset(os.path.join(os.getcwd(),"output_images"),os.path.join(os.getcwd(),"xml_labels"), os.path.join(os.getcwd(),"txt_labels"), "Pnemonia", IMAGE_WIDTH, IMAGE_HEIGHT, classes, get_train_transform())
+    train_dataset = CustomDataset(os.path.join(os.getcwd(),"output_images"),os.path.join(os.getcwd(),"xml_labels"), os.path.join(os.getcwd(),"txt_labels"), "Pnemonia",IMAGE_WIDTH, IMAGE_HEIGHT, classes, get_train_transform())
     print("one-------------",train_dataset)
-    valid_dataset = CustomDataset(os.path.join(os.getcwd(),"output_images"),os.path.join(os.getcwd(),"xml_labels"), os.path.join(os.getcwd(),"txt_labels"), "Pnemonia", IMAGE_WIDTH, IMAGE_HEIGHT, classes, get_valid_transform())
+    valid_dataset = CustomDataset(os.path.join(os.getcwd(),"output_images"),os.path.join(os.getcwd(),"xml_labels"), os.path.join(os.getcwd(),"txt_labels"), "Pnemonia",IMAGE_WIDTH, IMAGE_HEIGHT, classes, get_valid_transform())
     print("-------------",valid_dataset)
-    i, a = train_dataset[10]
+    i, a = train_dataset[20]
     print("iiiiii:",i)
     print("aaaaa:",a)
     with open('train_dataset.pkl', 'wb') as f:
         pickle.dump(train_dataset, f)
     with open('valid_dataset.pkl', 'wb') as f:
         pickle.dump(valid_dataset, f)
-  
-    
+
     return train_dataset
 
 transform_data()
