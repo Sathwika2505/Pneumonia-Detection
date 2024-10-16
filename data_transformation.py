@@ -70,7 +70,9 @@ def transform_data():
 
         def __getitem__(self, index):
         
-        
+            print(f"Index: {index}, Length of all_images: {len(self.all_images)}")
+            if index >= len(self.all_images):
+                raise IndexError("Index out of range.")
             try:
                 image_id = self.all_images[index][:-4]
                 annot_file_path = os.path.join(self.labels_path, f"{image_id}.xml")
@@ -150,8 +152,8 @@ def transform_data():
     classes = ['0', '1']
 
     train_dataset = CustomDataset(
-        os.path.join(os.getcwd(), "output_images"),
-        os.path.join(os.getcwd(), "xml_labels"),
+        os.path.join(os.getcwd(), "output_filtered_images"),
+        os.path.join(os.getcwd(), "xml_filtered_labels"),
         os.getcwd(),
         IMAGE_WIDTH, IMAGE_HEIGHT,
         classes,
@@ -160,8 +162,8 @@ def transform_data():
     print("Train Dataset: ", train_dataset)
 
     valid_dataset = CustomDataset(
-        os.path.join(os.getcwd(), "output_images"),
-        os.path.join(os.getcwd(), "xml_labels"),
+        os.path.join(os.getcwd(), "output_filtered_images"),
+        os.path.join(os.getcwd(), "xml_filtered_labels"),
         os.getcwd(),
         IMAGE_WIDTH, IMAGE_HEIGHT,
         classes,
@@ -169,7 +171,7 @@ def transform_data():
     )
     print("Valid Dataset: ", valid_dataset)
 
-    i, a = train_dataset[1347]
+    i, a = train_dataset[1]
     print("Image: ", i)
     print("Annotations: ", a)
 
