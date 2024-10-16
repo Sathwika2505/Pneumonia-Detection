@@ -181,8 +181,8 @@ def transform_data():
     classes = ['0', '1']
 
     train_dataset = CustomDataset(
-        os.path.join(os.getcwd(), "output_filtered_images"),
-        os.path.join(os.getcwd(), "xml_filtered_labels"),
+        os.path.join(os.getcwd(), "valid_images"),
+        os.path.join(os.getcwd(), "valid_xml"),
         os.getcwd(),
         IMAGE_WIDTH, IMAGE_HEIGHT,
         classes,
@@ -191,8 +191,8 @@ def transform_data():
     print("Train Dataset: ", train_dataset)
 
     valid_dataset = CustomDataset(
-        os.path.join(os.getcwd(), "output_filtered_images"),
-        os.path.join(os.getcwd(), "xml_filtered_labels"),
+        os.path.join(os.getcwd(), "valid_images"),
+        os.path.join(os.getcwd(), "valid_xml"),
         os.getcwd(),
         IMAGE_WIDTH, IMAGE_HEIGHT,
         classes,
