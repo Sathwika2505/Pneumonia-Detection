@@ -1,8 +1,0 @@
-image_id: afb87feb-0409-42d0-b5cf-7e6a820f67c0
-class_name: 1
-class_id: 1
-rad_id: 1
-x_min: 163.0
-y_min: 224.0
-x_max: 219.0
-y_max: 361.0

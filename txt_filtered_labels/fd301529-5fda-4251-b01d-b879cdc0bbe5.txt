@@ -1,8 +1,0 @@
-image_id: fd301529-5fda-4251-b01d-b879cdc0bbe5
-class_name: 1
-class_id: 1
-rad_id: 1
-x_min: 481.0
-y_min: 623.0
-x_max: 185.0
-y_max: 158.0

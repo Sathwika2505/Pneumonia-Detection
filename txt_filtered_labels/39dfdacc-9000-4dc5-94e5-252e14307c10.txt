@@ -1,8 +1,0 @@
-image_id: 39dfdacc-9000-4dc5-94e5-252e14307c10
-class_name: 1
-class_id: 1
-rad_id: 1
-x_min: 115.0
-y_min: 357.0
-x_max: 259.0
-y_max: 363.0

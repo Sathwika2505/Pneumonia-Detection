@@ -1,8 +1,0 @@
-image_id: bcc24ec7-8a99-4dcf-ba71-ac73659e2ac1
-class_name: 1
-class_id: 1
-rad_id: 1
-x_min: 665.0
-y_min: 290.0
-x_max: 179.0
-y_max: 373.0

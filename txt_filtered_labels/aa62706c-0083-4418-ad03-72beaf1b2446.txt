@@ -1,8 +1,0 @@
-image_id: aa62706c-0083-4418-ad03-72beaf1b2446
-class_name: 1
-class_id: 1
-rad_id: 1
-x_min: 499.0
-y_min: 180.0
-x_max: 252.0
-y_max: 533.0

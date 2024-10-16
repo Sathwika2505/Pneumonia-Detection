@@ -1,8 +1,0 @@
-image_id: bbcafe04-651f-4c43-bd9c-c94d51900478
-class_name: 1
-class_id: 1
-rad_id: 1
-x_min: 492.0
-y_min: 338.0
-x_max: 185.0
-y_max: 331.0

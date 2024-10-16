@@ -1,8 +1,0 @@
-image_id: ec3cfcee-58f2-442f-a272-59390100cbba
-class_name: 1
-class_id: 1
-rad_id: 1
-x_min: 567.0
-y_min: 206.0
-x_max: 214.0
-y_max: 409.0

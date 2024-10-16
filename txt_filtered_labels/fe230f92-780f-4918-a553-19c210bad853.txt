@@ -1,8 +1,0 @@
-image_id: fe230f92-780f-4918-a553-19c210bad853
-class_name: 1
-class_id: 1
-rad_id: 1
-x_min: 247.0
-y_min: 416.0
-x_max: 174.0
-y_max: 332.0

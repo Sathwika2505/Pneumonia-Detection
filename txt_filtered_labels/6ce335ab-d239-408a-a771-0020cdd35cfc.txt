@@ -1,8 +1,0 @@
-image_id: 6ce335ab-d239-408a-a771-0020cdd35cfc
-class_name: 1
-class_id: 1
-rad_id: 1
-x_min: 155.0
-y_min: 429.0
-x_max: 234.0
-y_max: 324.0

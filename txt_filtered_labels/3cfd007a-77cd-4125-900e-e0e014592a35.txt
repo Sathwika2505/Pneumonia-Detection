@@ -1,8 +1,0 @@
-image_id: 3cfd007a-77cd-4125-900e-e0e014592a35
-class_name: 1
-class_id: 1
-rad_id: 1
-x_min: 528.0
-y_min: 321.0
-x_max: 307.0
-y_max: 486.0

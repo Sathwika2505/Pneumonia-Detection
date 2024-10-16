@@ -1,8 +1,0 @@
-image_id: ca390006-726d-4c9c-975b-616f135d0aee
-class_name: 1
-class_id: 1
-rad_id: 1
-x_min: 551.0
-y_min: 256.0
-x_max: 230.0
-y_max: 361.0

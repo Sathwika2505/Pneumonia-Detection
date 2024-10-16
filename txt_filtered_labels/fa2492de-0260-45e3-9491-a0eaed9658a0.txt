@@ -1,8 +1,0 @@
-image_id: fa2492de-0260-45e3-9491-a0eaed9658a0
-class_name: 1
-class_id: 1
-rad_id: 1
-x_min: 168.0
-y_min: 302.0
-x_max: 237.0
-y_max: 285.0
