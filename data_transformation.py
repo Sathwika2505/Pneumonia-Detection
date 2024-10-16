@@ -50,7 +50,7 @@ def transform_data():
             print("Number of images: ", len(self.all_images))
 
         def load_img(self, img_path):
-            print("img_path-------------------", img_path)
+            #print("img_path-------------------", img_path)
             image = cv2.imread(img_path)
 
             if image is None:
