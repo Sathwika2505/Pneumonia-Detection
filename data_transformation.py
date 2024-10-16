@@ -67,70 +67,98 @@ def transform_data():
                 norm_bboxes[:, 2] = bboxes[:, 2] / cols
                 norm_bboxes[:, 3] = bboxes[:, 3] / rows
             return norm_bboxes
-
-        def __getitem__(self, index):
         
+        def __getitem__(self, index):
             print(f"Index: {index}, Length of all_images: {len(self.all_images)}")
             if index >= len(self.all_images):
                 raise IndexError("Index out of range.")
+            
+            image_id = self.all_images[index][:-4]
+            annot_file_path = os.path.join(self.labels_path, f"{image_id}.xml")
+            image_path = os.path.join(self.images_path, self.all_images[index])
+        
+            # Validate XML before parsing
+            if not is_valid_xml(annot_file_path):
+                print(f"Deleting corrupted or empty XML: {annot_file_path}")
+                os.remove(annot_file_path)  # Delete XML
+                if os.path.exists(image_path):
+                    print(f"Deleting associated image: {image_path}")
+                    os.remove(image_path)  # Delete associated image
+                return None  # Return None after deletion
+        
             try:
-                image_id = self.all_images[index][:-4]
-                annot_file_path = os.path.join(self.labels_path, f"{image_id}.xml")
-
-                # Validate XML before parsing
-                if not is_valid_xml(annot_file_path):
-                    print(f"Skipping corrupted or empty XML: {annot_file_path}")
-                    return None  # You can return a default image and empty target here if necessary
-
                 # Parse the annotation file
                 tree = ET.parse(annot_file_path)
                 root = tree.getroot()
-
-                image_path = os.path.join(self.images_path, self.all_images[index])
-
+        
                 # Attempt to load the image
                 image = self.load_img(image_path)
-
+        
             except ValueError as e:
                 print(f"Error loading image: {e}")
                 return None  # Skip this image
-
+        
             boxes = []
             labels = []
             for member in root.findall('object'):
-                label = member.find('Target').text
+                # Check if the expected elements are present and not None
+                target_elem = member.find('Target')
+                x_elem = member.find('x')
+                y_elem = member.find('y')
+                width_elem = member.find('width')
+                height_elem = member.find('height')
+        
+                if target_elem is None or x_elem is None or y_elem is None or width_elem is None or height_elem is None:
+                    print(f"Missing values in XML for image_id: {image_id}. Deleting entry and associated files.")
+                    os.remove(annot_file_path)  # Delete XML
+                    if os.path.exists(image_path):
+                        os.remove(image_path)  # Delete associated image
+                    return None  # Return None after deletion
+        
+                label = target_elem.text
                 if label not in self.classes:
                     continue  # Skip labels not in the classes
-                labels.append(self.classes.index(label))
-                x_center = float(member.find('x').text)
-                y_center = float(member.find('y').text)
-                width = float(member.find('width').text)
-                width = x_center + width
-                height = float(member.find('height').text)
-                height = y_center + height
-
+                
+                labels.append(self.classes.index(label))                
+                
+                # Convert values to float and check for NoneType before using
+                try:
+                    x_center = float(x_elem.text)
+                    y_center = float(y_elem.text)
+                    width = float(width_elem.text)
+                    height = float(height_elem.text)
+                except (ValueError, TypeError) as e:
+                    print(f"Value error for image_id: {image_id}, Error: {e}. Deleting entry and associated files.")
+                    os.remove(annot_file_path)  # Delete XML
+                    if os.path.exists(image_path):
+                        os.remove(image_path)  # Delete associated image
+                    return None  # Return None after deletion
+        
+                width += x_center
+                height += y_center
+        
                 if not any(np.isnan([x_center, y_center, width, height])) and width > 0 and height > 0:
                     boxes.append([x_center, y_center, width, height])
-
+        
             boxes = np.array(boxes) if boxes else np.empty((0, 4))  # Use empty array if no valid boxes
             area = boxes[:, 2] * boxes[:, 3] if boxes.size > 0 else torch.tensor([0], dtype=torch.float32)
             area = torch.as_tensor(area, dtype=torch.float32)
-
+        
             labels = torch.tensor(labels, dtype=torch.long) if labels else torch.tensor([], dtype=torch.long)
-
+        
             image = (image * 255).astype(np.uint8)
-
+        
             image_pil = ToPILImage()(image)
-
+        
             if self.transforms:
                 image = self.transforms(image_pil)
-
+        
             _, h, w = image.shape
             norm_boxes = self.normalize_bbox(boxes, rows=h, cols=w)
-
+        
             valid_indices = (norm_boxes[:, 2] > 0) & (norm_boxes[:, 3] > 0)
             valid_boxes = norm_boxes[valid_indices]
-
+        
             target = {}
             if valid_boxes.size > 0:
                 target['boxes'] = torch.as_tensor(valid_boxes, dtype=torch.float32)
@@ -138,11 +166,12 @@ def transform_data():
             else:
                 target['boxes'] = torch.empty((0, 4), dtype=torch.float32)
                 target['labels'] = torch.empty((0,), dtype=torch.long)
-
+        
             target['image_id'] = torch.tensor([index])
             target['area'] = area[valid_indices] if valid_indices.any() else torch.tensor([0], dtype=torch.float32)
-
+        
             return image, target
+
 
         def __len__(self):
             return len(self.all_images)
@@ -170,11 +199,17 @@ def transform_data():
         get_valid_transform()
     )
     print("Valid Dataset: ", valid_dataset)
+    
+    for j in range(len(train_dataset)):
+        result = train_dataset[j]
+        if result is not None:  # Check if the result is not None
+            i, a = result  # Unpack only if result is valid
+            print("Image: ", i)  # Optionally print the image if needed
+            print("Annotations: ", a)
+        else:
+            print(f"Skipping index {j} due to None result.")
 
-    i, a = train_dataset[1]
-    print("Image: ", i)
-    print("Annotations: ", a)
-
+    # Save datasets
     with open('train_dataset.pkl', 'wb') as f:
         pickle.dump(train_dataset, f)
 
