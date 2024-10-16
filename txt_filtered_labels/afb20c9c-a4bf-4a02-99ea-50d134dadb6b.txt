@@ -1,0 +1,8 @@
+image_id: afb20c9c-a4bf-4a02-99ea-50d134dadb6b
+class_name: 1
+class_id: 1
+rad_id: 1
+x_min: 225.0
+y_min: 324.0
+x_max: 233.0
+y_max: 245.0

@@ -1,0 +1,8 @@
+image_id: e65529f2-45df-4020-adcc-7de1996c38e8
+class_name: 1
+class_id: 1
+rad_id: 1
+x_min: 193.0
+y_min: 751.0
+x_max: 189.0
+y_max: 232.0

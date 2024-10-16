@@ -1,7 +1,6 @@
 from PIL import Image
 from data_extraction import data_extraction
 import os, random
-import pandas as pd
 
 def datavisualization():
     images = data_extraction()

@@ -1,0 +1,8 @@
+image_id: ac2257b8-e600-42bd-ab9c-951fa49b3ec6
+class_name: 1
+class_id: 1
+rad_id: 1
+x_min: 615.0
+y_min: 90.0
+x_max: 288.0
+y_max: 688.0

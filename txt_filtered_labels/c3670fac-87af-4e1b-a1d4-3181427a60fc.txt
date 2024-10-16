@@ -1,0 +1,8 @@
+image_id: c3670fac-87af-4e1b-a1d4-3181427a60fc
+class_name: 1
+class_id: 1
+rad_id: 1
+x_min: 579.0
+y_min: 488.0
+x_max: 141.0
+y_max: 246.0

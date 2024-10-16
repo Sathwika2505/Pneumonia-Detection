@@ -1,0 +1,8 @@
+image_id: c109061a-d815-4cae-8343-9230d8024adf
+class_name: 1
+class_id: 1
+rad_id: 1
+x_min: 84.0
+y_min: 285.0
+x_max: 227.0
+y_max: 432.0
